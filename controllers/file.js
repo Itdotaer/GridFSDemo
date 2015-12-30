@@ -21,21 +21,23 @@ exports.uploadWithGridFS = function(req, res, next){
     var saveAtLocal = req.body.saveAtLocal || 'off';
     console.log('SaveAtLocal', saveAtLocal);
     if(file){
+        //Save to GridFS.
         UploaderProxy.upload(file, function(err, cbGridFS){
             if(err){
-                res.render('error', {
+                return res.render('error', {
                     message: err.message,
                     error: err
                 });
             }
 
+            //Add a record to File table with gridfs info(_id).
             var localPath = saveAtLocal == 'off' ? '' : '\\' + config.uploadPath + '\\' + file.filename;
             FileProxy.add(file.originalname, cbGridFS._id, localPath, function(err, cbFile){
                 //Remvoe file
                 if(saveAtLocal == 'off'){
                     fs.unlink(file.path, function(unlinkErr){
                         if(err || unlinkErr){
-                            res.render('error', {
+                            return res.render('error', {
                                 message: 'Error',
                                 error: err || unlinkErr
                             });
@@ -43,13 +45,13 @@ exports.uploadWithGridFS = function(req, res, next){
                     });
                 }else{
                     if(err){
-                        res.render('error', {
+                        return res.render('error', {
                             message: 'Error',
                             error: err
                         });
                     }
                 }
-
+                //Successed:redirect.
                 res.redirect('index');
             });
         });
@@ -71,7 +73,11 @@ exports.downloadGridFS = function(req, res, next){
             _id: gridFSId
         }).pipe(res);
     }else{
-        console.error('No gridFSId.');
+        res.render(error, {
+            message: 'No gridFSId.',
+            error: ''
+        });
+        // console.error('No gridFSId.');
     }
 };
 
@@ -96,12 +102,12 @@ exports.get = function(req, res, next){
 
     FileProxy.get(fileName, index, size, function(err, files){
         if(err){
-            res.render(error, {
+            return res.render(error, {
                 message: 'No file upload.',
                 error: ''
             });
         }
-        // res.json({ result: 'success', data: files });
+
         res.render('files', {
             title: 'Files',
             files: files
