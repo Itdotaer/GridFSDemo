@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <p>
+        <a href='uploadwithgridfs'>GridFs Upload</a>
+    </p>
+    <table border="1" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>File Name</th>
+                <th>GridFS Id</th>
+                <th>Created At</th>
+                <th>Local Path</th>
+            </tr>
+        </thead>
+        <tbody>
+            <%files.forEach(function (file, index) {%>
+            <tr>
+                <td><%=index + 1%></td>
+                <td>
+                    <%=file.fileName%>
+                </td>
+                <td>
+                    <a href="downloadGridFS/<%=file.gridFSId%>">
+                        <%=file.gridFSId%>
+                    </a>
+                </td>
+                <td><%=file.createdAt%></td>
+                <td>
+                    <a href="download?localPath=<%=file.localPath%>">
+                        <%=file.localPath%>
+                    </a>
+                </td>
+            </tr>
+            <%});%>
+        </tbody>
+    </table>
+  </body>
+</html>

@@ -1,63 +1,110 @@
-var FileProxy = require('../proxys').File;
-var UploaderProxy = require('../proxys').Uploader;
+var fs = require('fs');
+var path = require('path');
+var multer = require('multer');
 var mongoose = require('mongoose');
-var conn = mongoose.connection;
 var Grid = require('gridfs-stream');
 Grid.mongo = mongoose.mongo;
 
-exports.uploadPage = function(req, res, next){
-    console.log('req', req);
-    res.render('uploadFiles', {
-        title: 'UploadFiles'
+var FileProxy = require('../proxys').File;
+var UploaderProxy = require('../proxys').Uploader;
+
+var config = require('../config');
+
+exports.uploadPageWithGridFS = function(req, res, next){
+    res.render('uploadFilesWithGridFS', {
+        title: 'UploadFilesWithGridFS'
     });
 };
 
-exports.upload = function(req, res, next){
-    console.log('req', req.file);
+exports.uploadWithGridFS = function(req, res, next){
     var file = req.file;
+    var saveAtLocal = req.body.saveAtLocal || 'off';
+    console.log('SaveAtLocal', saveAtLocal);
     if(file){
-        // UploaderProxy.upload(file, function(err, file){
-        //     if(err){
-        //         res.render('error', {
-        //             message: err.message,
-        //             error: err
-        //         });
-        //     }
-        //
-        //     res.redirect('files');
-        // });
-        //
-        res.redirect('files');
+        UploaderProxy.upload(file, function(err, cbGridFS){
+            if(err){
+                res.render('error', {
+                    message: err.message,
+                    error: err
+                });
+            }
+
+            var localPath = saveAtLocal == 'off' ? '' : '\\' + config.uploadPath + '\\' + file.filename;
+            FileProxy.add(file.originalname, cbGridFS._id, localPath, function(err, cbFile){
+                //Remvoe file
+                if(saveAtLocal == 'off'){
+                    fs.unlink(file.path, function(unlinkErr){
+                        if(err || unlinkErr){
+                            res.render('error', {
+                                message: 'Error',
+                                error: err || unlinkErr
+                            });
+                        }
+                    });
+                }else{
+                    if(err){
+                        res.render('error', {
+                            message: 'Error',
+                            error: err
+                        });
+                    }
+                }
+
+                res.redirect('index');
+            });
+        });
     }else{
-        res.render(error, {
+        res.render('error', {
             message: 'No file upload.',
             error: ''
         });
     }
 };
 
-exports.download = function(req, res, next){
-    var storedId = req.params['storedId'];
+exports.downloadGridFS = function(req, res, next){
+    var gridFSId = req.params['gridFSId'];
 
-    if(!storedId){
+    if(gridFSId){
+        var conn = mongoose.connection;
         var gfs = Grid(conn.db);
         gfs.createReadStream({
-            _id: storedId
+            _id: gridFSId
         }).pipe(res);
     }else{
-        console.error('No storedId');
+        console.error('No gridFSId.');
+    }
+};
+
+exports.download = function(req, res, next){
+    var localPath = req.query['localPath'];
+    if(localPath){
+        var file = __dirname + '\\..' + localPath;
+        res.download(file);
+    }else{
+        res.render(error, {
+            message: 'No file.',
+            error: ''
+        });
     }
 };
 
 exports.get = function(req, res, next){
-    var fileName = req.query['fileName'];
+    var fileName = req.query['fileName'] || '';
+
     var index = req.query['index'] || 1;
     var size = req.query['size'] || 10;
 
     FileProxy.get(fileName, index, size, function(err, files){
         if(err){
-            return console.error(err);
+            res.render(error, {
+                message: 'No file upload.',
+                error: ''
+            });
         }
-        return console.logl(files);
+        // res.json({ result: 'success', data: files });
+        res.render('files', {
+            title: 'Files',
+            files: files
+        });
     });
 };

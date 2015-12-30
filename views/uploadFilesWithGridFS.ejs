@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+
+    <form method="post" action="/files/uploadwithgridfs" enctype="multipart/form-data">
+        <table>
+            <tr>
+                <td>
+                    <label>Saved At Local:</label>
+                    <input type="checkbox" name="saveAtLocal" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Select File:</label>
+                    <input type="file" name="upfile"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="submit" value="Upload">
+                </td>
+            </tr>
+        </table>
+    </form>
+  </body>
+</html>

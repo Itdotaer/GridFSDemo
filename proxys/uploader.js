@@ -7,29 +7,19 @@ var fs = require('fs');
 var Grid = require('gridfs-stream');
 Grid.mongo = mongoose.mongo;
 
-exports.upload = function(file, callback) {
+exports.upload = function(file, callback){
+    var gfs = Grid(conn.db);
 
-    conn.once('open', function(err) {
-        if (err) {
-            return callback(err, null);
-        }
-        var gfs = Grid(conn.db);
+    var writestream = gfs.createWriteStream({
+        filename: file.originalname
+    });
+    fs.createReadStream(file.path).pipe(writestream);
 
-        // streaming to gridfs
-        //filename to store in mongodb
-        var writestream = gfs.createWriteStream({
-            filename: fileName
-        });
-        // fs.createReadStream(path).pipe(writestream);
-
-        writestream.put(file.buffer);
-
-        writestream.on('close', function(file) {
-            return callback(null, file);
-        });
-        readstream.on('error', function(err) {
-            return callback(err, null);
-        });
+    writestream.on('close', function(file) {
+        return callback(null, file);
+    });
+    writestream.on('error', function(err) {
+        return callback(err, null);
     });
 };
 

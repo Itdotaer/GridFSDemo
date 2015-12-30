@@ -1,18 +1,30 @@
 var models = require('../models');
 var File = models.File;
 
-exports.add = function(fileName, callback){
+exports.add = function(fileName, gridFSId, localPath, callback){
     var file = new File({
-        fileName: fileName
+        fileName: fileName,
+        gridFSId: gridFSId,
+        localPath: localPath
     });
 
     file.save(callback);
 };
 
+exports.get = function(index, size, callback){
+    var conditions = {fileName: fileName};
+
+    File.find(conditions).limit(size).skip((index - 1) * size).exec(callback);
+};
+
 exports.get = function(fileName, index, size, callback){
     var conditions = {fileName: fileName};
 
-    File.find(conditions).limit(opt.size).skip((opt.index - 1) * opt.size).exec(callback);
+    if(fileName == ''){
+        return File.find().limit(size).skip((index - 1) * size).exec(callback);
+    }
+
+    File.find(conditions).limit(size).skip((index - 1) * size).exec(callback);
 };
 
 exports.getById = function(id, callback){
